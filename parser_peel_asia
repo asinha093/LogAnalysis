@@ -1,0 +1,85 @@
+__author__ = 'rahul'
+from datetime import datetime
+from pymongo import MongoClient
+
+
+def insert_mongo(temp):
+    data = {"timestamp":temp[0],"request":{"type":temp[1],"link":temp[2],"details":temp[3],"response":temp[4],"byte_transfer":temp[5],"response_time":temp[9]} ,"user_data":temp[6],"host":temp[7],"vm":temp[9]}
+    add1 = dest.insert(data)
+    print datetime.now().time()
+    return add1
+
+def extract_fields(data):
+    a, b = data.find('[') , data.find(']')
+    timestamp = data[a+1:b-1].split(' ')[0]
+    date = timestamp[1:timestamp.find(':')]
+    time = timestamp[timestamp.find(':')+1:timestamp.find(':')+9]
+    date = datetime.strptime(date, '%d/%b/%Y').strftime('%d.%m.%Y')
+    timestamp = date + ' ' + time
+    data= data[b+1:]
+    a = data.find('/')
+    print timestamp
+    req_type = data[:a].strip(' ')
+    if data.find('?') >-1:
+        b = data.find('?')
+        req_link = data[a:b].strip(' ')
+        req_det = data[b:b+data[b:].find(" ")].strip(' ')
+        data = data[b+data[b:].find(" "):]
+    else :
+        req_link = data[a:a+data[a:].find(" ")].strip(' ')
+        req_det = '-'
+        data = data[a+data[a:].find(" "):]
+    #print req_link, req_det, req_type
+    if data.find('(') >-1 and data.find(')') > -1:
+        user_data = data[data.find('(')+1:data.find(')')-1].strip(' ')
+        host = data[data.find(')')+1:].strip(' ')
+        data = data [:data.find('(')]
+    else:
+        user_data = '-'
+        host = data[data.rfind(' '):].strip(' ')
+        data = data[:data.rfind(' ')].strip(' ')
+
+    data = data.strip(' ')
+    try:
+        a = data.find(' ')
+        b = data.rfind(' ')
+        response = data[:a]
+        vm = data[b+1:]
+        data = data[a+1:b]
+    except:
+        response = '-'
+        vm = '-'
+    try:
+        byte_transfer = data.split(' ')[0]
+        response_time = data.split(' ')[1]
+    except:
+        byte_transfer = '-'
+        response_time = '-'
+    log = [timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time]
+    return insert_mongo(log)
+
+
+def imp_write(dbase,src,dst):
+    global client, dest
+    client = MongoClient(max_pool_size = 99999)
+    db = client[dbase]
+    sour = db[src]
+    dest = db[dst]
+    print sour
+    holder = sour.find()
+    z = datetime.now()
+
+    for k in holder:
+        t =extract_fields(k['content'])
+        timetaken = datetime.now() - z
+        print timetaken
+    print "done"
+    timetaken = datetime.now() - z
+    print timetaken
+
+if __name__ == '__main__':
+    imp_write('trial','raw_data1','parsed_data')
+
+
+
+

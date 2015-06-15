@@ -74,27 +74,31 @@ def extract_fields(data,num): #Extracting fields based on the format using find 
             logid = '-'
     except:
         logid = '-'
-    #log = [timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time]
     return insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, num, logid)
-    #return 1
 
 def source_read(dbase,src,dst):
     global client, cass_client, col_fam, uuid, dest
-    client = MongoClient(max_pool_size = 99999)
+    cass_client = ConnectionPool(dbase,['localhost:9160'])
     uuid = 100000
-    db = client[dbase]
-    sour = db[src]
-    dest = db[dst]
-    holder = sour.find()
-    cass_client = ConnectionPool('main',['localhost:9160'])
-    col_fam = ColumnFamily(cass_client,'random3')
-    for k in holder:
-        t =extract_fields(k['content'],uuid)
-        uuid = uuid + 1
+    sour = ColumnFamily(cass_client,src)
+    col_fam = ColumnFamily(cass_client,dst)
+    i =1
+    for x in range(0,9999999):
+        try:
+            t1 = datetime.now()
+            holder = sour.get(str(x))
+            print datetime.now() - t1
+            qwer = datetime.now()
+            t =extract_fields(holder['content'],uuid)
+            print datetime.now() - qwer
+            uuid += 1
+            x += 1
+        except:
+            break
+
 
 if __name__ == '__main__':
-    source_read('trial','raw_data1','parsed_data')
-
+    source_read('main','random1','random2')
 
 
 

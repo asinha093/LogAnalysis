@@ -22,11 +22,11 @@ def initialize_connection(key_space, column_fam):
     cass_client = ConnectionPool(key_space, ['localhost:9160'])
     col_fam = ColumnFamily(cass_client, column_fam)
     # function call
-    extract_data(file_path, uuid)
+    extract_data(file_path, col_fam, uuid)
     print "Added data to the Cassandra database"
     return 1
 
-def extract_data(file_path, num):
+def extract_data(file_path, col_fam, num):
 
     row_count = 0
     text = open(file_path).readlines()
@@ -72,12 +72,12 @@ def extract_data(file_path, num):
             status = "-"
             bytes = "-" 
         # function call
-        insert_data(num, host, date, requestline, status, bytes)
+        insert_data(col_fam, num, host, date, requestline, status, bytes)
         num = num + 1
-        counter = counter + 1
+        row_count = row_count + 1
     return 1
 
-def insert_data(num, host, date, requestline, status, bytes):
+def insert_data(col_fam, num, host, date, requestline, status, bytes):
     t_ins = datetime.now()
     col_fam.insert(str(num), {"host": host, "timestamp": date, "requestline": requestline, "statuscode": status, "bytesize": bytes})     
     print "Insertion time: %s  Time Elasped: %s" % ((datetime.now() - t_ins),(datetime.now() - t_init))
@@ -85,7 +85,7 @@ def insert_data(num, host, date, requestline, status, bytes):
 
 if __name__ == '__main__':
 
-    global col_fam, t_init
+    global t_init
     t_init = datetime.now()
     key_space = 'main_keyspace'
     column_fam = 'main_column'

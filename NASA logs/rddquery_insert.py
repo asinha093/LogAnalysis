@@ -8,21 +8,21 @@ from cassandra.cluster import Cluster
 
 from datetime import datetime
 
-def spark_config():
+def spark_config(key_space):
     
     # configuring spark with cassandra keyspace and columnfamily
     conf = SparkConf().set("spark.cassandra.connection.host", "127.0.0.1").set("spark.cassandra.connection.native.port","9042")
     sc = CassandraSparkContext(conf=conf)
-    rdd = sc.cassandraTable("main_keyspace", "main_column")
+    rdd = sc.cassandraTable(key_space, column_fam)
     # collecting rows in rdd grouped by key
-    time_rdd = rdd.select("timestamp","key").groupByKey().take(50000)
+    TIME_rdd = rdd.select("timestamp","key").groupByKey().take(50000)
     # function call 
-    return start_connection(time_rdd)
+    return TIME_rdd
 
 def start_connection(time_rdd):
 
-    pool = ConnectionPool('main_keyspace',['localhost:9160'])
-    col_fam = ColumnFamily(pool,'main_column')
+    pool = ConnectionPool(key_space, ['localhost:9160'])
+    col_fam = ColumnFamily(pool, column_fam)
     # creating a dictionary to store counts and values according to timestamp
     timedict={}
     uuid = 100000
@@ -80,11 +80,14 @@ def insert_stats(timedict, timekey, uuid):
 
 if __name__ == "__main__":
 
-    global session, t_init
+    global session, column_fam, key_space, t_init
     t_init = datetime.now()
     # connecting to the cassandra database to create a table
-    session = Cluster(contact_points=['127.0.0.1'], port=9042).connect(keyspace='m123') 
+    key_space = 'main_keyspace'
+    column_fam = 'main_column'
+    session = Cluster(contact_points=['127.0.0.1'], port=9042).connect(keyspace='key_space') 
     session.execute("""CREATE TABLE counts( uid bigint, timestamp varchar, ip list<varchar>, ipcount list<int>, request list<varchar>, requestcount list<int>, status list<varchar>, statuscount list<int>, PRIMARY KEY (uid) )""")
-    #function call
-    spark_config()
+    #function calls
+    time_rdd = spark_config()
+    start_connection(time_rdd)
     print "Total Time Elapsed: %s" % (datetime.now() - t)

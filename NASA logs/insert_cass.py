@@ -6,9 +6,8 @@ from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from pycassa.system_manager import *
 
-def initialize_connection():
+def initialize_connection(file_path):
 
-    file_path = "/home/abhinav/Downloads/NASA_Aug95"
     uuid = 100000
     # function call
     extract_data(file_path, uuid)
@@ -34,9 +33,9 @@ def extract_data(file_path, num):
 
         # timestamp_details
         try:
-            loc1 = data.find('[')
-            loc2 = data.find('-0400')
-            timestamp = data[loc1 + 1:loc2-4]
+            location1 = data.find('[')
+            location2 = data.find('-0400')
+            timestamp = data[location1 + 1:location2-4]
             mytime = datetime.strptime(timestamp, '%d/%b/%Y:%H:%M')
             # adding the timezone in the time format
             mytime += timedelta(hours=4) #timezone = -0400 hours
@@ -52,9 +51,9 @@ def extract_data(file_path, num):
 
         # status_code, byte_size
         try:
-            loc = data.find('" ')
-            status = data[loc+2:].split(" ")[0]
-            bytes = (data[loc:].split(" "))[2].split('\n')[0]
+            location = data.find('" ')
+            status = data[location+2:].split(" ")[0]
+            bytes = (data[location:].split(" "))[2].split('\n')[0]
             # to skip the lines with errors --> no space between statuscode and bytesize data
             if " " in status:
                 continue
@@ -77,6 +76,7 @@ if __name__ == '__main__':
 
     global col_fam, t_init
     t_init = datetime.now()
+    file_path = "/home/abhinav/Downloads/NASA_Aug95"
     
     # creating Keyspace and ColumnFamily using pycassaShell commands
     sys = SystemManager('localhost:9160')
@@ -89,4 +89,4 @@ if __name__ == '__main__':
     cass_client = ConnectionPool('main_keyspace', ['localhost:9160'])
     col_fam = ColumnFamily(cass_client, 'main_column')
     # function call
-    initialize_connection() 
+    initialize_connection(file_path) 

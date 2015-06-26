@@ -3,15 +3,15 @@ from datetime import datetime
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from pycassa.system_manager import *
+from pycassa.batch import *
 import uuid
 
 
 
-def insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, os, phone_type,conn):
+def insert_cassandra(batch,data):
     id1 = uuid.uuid1()
-    insert = conn.insert(str(id1), {"timestamp":  timestamp.encode("utf-8"), "req_type": req_type.encode("utf-8"),"req_link": req_link.encode("utf-8"),"req_details": req_det.encode("utf-8"),"response": int(response),"byte_transfer": int(byte_transfer),"response_time": int(response_time), "user_agent": user_data.encode("utf-8"),"host": host.encode("utf-8"),"virt_mach": vm.encode("utf-8"),"os": os.encode("utf-8"),"device_type": phone_type.encode("utf-8")})
-    return insert
-
+    new_batch = batch.insert(str(id1), {"timestamp":  data[0].encode("utf-8"), "req_type": data[1].encode("utf-8"),"req_link": data[2].encode("utf-8"),"req_details": data[3].encode("utf-8"),"response": int(data[4]),"byte_transfer": int(data[5]),"response_time": int(data[9]), "user_agent": data[6].encode("utf-8"),"host": data[7].encode("utf-8"),"virt_mach": data[8].encode("utf-8"),"os": data[10].encode("utf-8"),"device_type": data[11].encode("utf-8")})
+    return new_batch
 
 def create_keyspace(cluster, key_space, column_fam):
 
@@ -96,10 +96,25 @@ def source_read(cluster,dbase,src,dst):
     cass_client = ConnectionPool(dbase,[cluster])
     source = ColumnFamily(cass_client,src)
     dest_conn = ColumnFamily(cass_client,dst)
-    while source.get(str(x)):
+    batch = dest_conn.batch(queue_size=1000)
+    for x in range(0,9999999):
+        t1 = datetime.now()
         holder = source.get(str(x))
-        t = extract_fields(holder['content'],dest_conn)
+        qwer = datetime.now()
+        fields = extract_fields(holder['content'])
+        batch = insert_cassandra(batch, fields)
+        if x % 1000 == 0:
+            # inserting in batches of 1000
+            batch.send()
+            print "batch sent"
+            # creating a fresh batch
+            batch = dest_conn.batch(queue_size=1000)
+        elif x == 99999999:
+            # inserting the final batch
+            batch.send()
+        print datetime.now() - qwer, x
         x += 1
+
 
 
 if __name__ == '__main__':

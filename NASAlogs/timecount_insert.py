@@ -1,7 +1,6 @@
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 
-import pyspark_cassandra
 from pyspark import SparkConf, SparkContext
 from pyspark_cassandra.context import *
 from cassandra.cluster import Cluster
@@ -53,7 +52,7 @@ def retrieve_errors(rdd):
 
 def retrieve_stats(rdd, keys, time, uid, cass_conn):
 
-    ip, request_type, request_link, request_prot, request_file, response_code, keytemp = [], [], [], [], [], [], []
+    ip, request_type, request_prot, request_file, response_code, keytemp = [], [], [], [], [], []
     bytes = 0
     for key in keys:
         keytemp.append(str(key))
@@ -61,18 +60,17 @@ def retrieve_stats(rdd, keys, time, uid, cass_conn):
     log = cass_conn.multiget(keytemp)
     for item in log.values():
         # appending lists with their respective values
-        ip.append(item['host']), request_type.append(item['request-type']), request_link.append(item['request-link']), request_file.append(item['request-file']), request_prot.append(item['request-protocol']), response_code.append(item['response-code'])
+        ip.append(item['host']), request_type.append(item['request-type']), request_file.append(item['request-file']), request_prot.append(item['request-protocol']), response_code.append(item['response-code'])
         if item['byte-transfer'] != '-':
             bytes += int(item['byte-transfer'])
     # function calls
     host = counts(ip)
     req_type = counts(request_type)
-    req_link = counts(request_link)
     req_prot = counts(request_prot)
     req_file = counts(request_file)
     resp = counts(response_code)
     uniq_vis = len(host[0])
-    return insert_stats(uid, time, host[0], host[1], req_type[0], req_type[1], req_link[0], req_link[1], req_file[0], req_file[1], req_prot[0], req_prot[1], resp[0], resp[1], bytes, uniq_vis)
+    return insert_stats(uid, time, host[0], host[1], req_type[0], req_type[1], req_file[0], req_file[1], req_prot[0], req_prot[1], resp[0], resp[1], bytes, uniq_vis)
 
 def counts(set):
     
@@ -92,16 +90,16 @@ def insert_errors(num, ip400, link400, ip500, link500):
     print "Time for inserting: %s  Time Elapsed: %s" %( (datetime.now() - t_ins), (datetime.now() - t_init) )
     return 1
 
-def insert_stats(num, time, ip, ip_count, reqtype, reqtype_count, reqlink, reqlink_count, reqfile, reqfile_count, reqprot, reqprot_count, resp, resp_count, bytes, uniq_vis):
+def insert_stats(num, time, ip, ip_count, reqtype, reqtype_count, reqfile, reqfile_count, reqprot, reqprot_count, resp, resp_count, bytes, uniq_vis):
 
     t_ins = datetime.now()
-    session.execute("""INSERT INTO NASA_COUNT(uid, timestamp, ip, ip_count, request_type, request_type_count, request_link, request_link_count, request_file, request_file_count, request_protocol, request_protocol_count, response_code, response_code_count, byte_transfer, unique_visits) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",(num, time, ip, ip_count, reqtype, reqtype_count, reqlink, reqlink_count, reqfile, reqfile_count, reqprot, reqprot_count, resp, resp_count, str(bytes), str(uniq_vis)))
+    session.execute("""INSERT INTO NASA_COUNT(uid, timestamp, ip, ip_count, request_type, request_type_count, request_file, request_file_count, request_protocol, request_protocol_count, response_code, response_code_count, byte_transfer, unique_visits) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",(num, time, ip, ip_count, reqtype, reqtype_count, reqfile, reqfile_count, reqprot, reqprot_count, resp, resp_count, bytes, uniq_vis))
     print "Time for inserting: %s  Time Elapsed: %s" %( (datetime.now() - t_ins), (datetime.now() - t_init) )
     return 1
 
 if __name__ == "__main__":
 
-    session.execute("""CREATE TABLE NASA_COUNT ( uid bigint, timestamp varchar, ip list<varchar>, ip_count list<int>, request_type list<varchar>, request_type_count list<int>, request_link list<varchar>, request_link_count list<int>, request_file list<varchar>, request_file_count list<int>, request_protocol list<varchar>, request_protocol_count list<int>, response_code list<varchar>, response_code_count list<int>, byte_transfer varchar, unique_visits varchar, PRIMARY KEY (uid) )""")
+    session.execute("""CREATE TABLE NASA_COUNT ( uid bigint, timestamp varchar, ip list<varchar>, ip_count list<int>, request_type list<varchar>, request_type_count list<int>, request_file list<varchar>, request_file_count list<int>, request_protocol list<varchar>, request_protocol_count list<int>, response_code list<varchar>, response_code_count list<int>, byte_transfer bigint, unique_visits int, PRIMARY KEY (uid) )""")
     session.execute("""CREATE TABLE NASA_ERROR ( uid bigint, ip_400 list<varchar>, request_link_400 list<varchar>, ip_500 list<varchar>, request_link_500 list<varchar>, PRIMARY KEY (uid) )""")
     #function call
     spark_config()

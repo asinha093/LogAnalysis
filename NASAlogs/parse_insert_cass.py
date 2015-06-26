@@ -5,6 +5,10 @@ from datetime import datetime, timedelta
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from pycassa.system_manager import *
+global t_init, file_path
+t_init = datetime.now()
+# initlializations
+file_path = "/home/abhinav/Downloads/MayaLogs/Asia"
 
 def create_keyspace(key_space, column_fam):
 
@@ -12,6 +16,9 @@ def create_keyspace(key_space, column_fam):
     sys.create_keyspace(key_space, SIMPLE_STRATEGY, {'replication_factor': '1'})
     validators = {'host': UTF8_TYPE,'timestamp': UTF8_TYPE, 'requestline': UTF8_TYPE, 'statuscode': UTF8_TYPE, 'bytesize': UTF8_TYPE}
     sys.create_column_family(key_space, column_fam, super=False, comparator_type=UTF8_TYPE, key_validation_class=UTF8_TYPE, column_validation_classes=validators)
+    # configuring the compaction strategy of cassandra table
+    session = Cluster(contact_points=['127.0.0.1'], port=9042).connect(keyspace=key_space) 
+    session.execute("""ALTER TABLE "ASIA_CF" WITH compaction = {'class' :  'LeveledCompactionStrategy'} AND compression = {'sstable_compression' : 'DeflateCompressor', 'chunk_length_kb' : 128}""")
     sys.close()
     return 1
 
@@ -85,8 +92,6 @@ def insert_data(col_fam, num, host, date, requestline, status, bytes):
 
 if __name__ == '__main__':
 
-    global t_init
-    t_init = datetime.now()
     key_space = 'main_keyspace'
     column_fam = 'main_column'
     # creating Keyspace and ColumnFamily using pycassaShell commands

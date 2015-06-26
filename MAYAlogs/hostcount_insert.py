@@ -8,6 +8,9 @@ from pyspark_cassandra.context import *
 import datetime
 import uuid
 
+def create_table(session,table):
+    session.execute("CREATE TABLE "+table+" (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id))")session.execute("CREATE TABLE time_counts (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id))")
+    return 1
 
 def batch_prepare(batch, fields,dest,session):
     batch_statement = session.prepare("INSERT INTO " +dest+"(uid, host, links, user_agent, byte_transfer, response_time) VALUES (?, ?, ?, ?, ?, ?)")
@@ -54,6 +57,7 @@ def initilize_conn(cluster, keyspace,source,dest):
     col_fam = ColumnFamily(pool,source)
     cluster = Cluster()
     session = cluster.connect(keyspace)
+    create_table(session,dest)
     conf = SparkConf().set("spark.cassandra.connection.host", "127.0.0.1").set("spark.cassandra.connection.native.port","9042")
     sc = CassandraSparkContext(conf=conf)
     rdd = sc.cassandraTable(keyspace, source).cache()

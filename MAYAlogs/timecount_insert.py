@@ -2,7 +2,7 @@ from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from pyspark import SparkConf, SparkContext
 from pyspark_cassandra.context import *
-from cassandra.cluster import Cluster
+from cassandra.cluster import Cluster, BatchStatement
 from datetime import datetime
 import multiprocessing
 import uuid

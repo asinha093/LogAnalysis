@@ -9,7 +9,7 @@ import datetime
 import uuid
 
 def create_table(session,table):
-    session.execute("CREATE TABLE "+table+" (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id))")session.execute("CREATE TABLE time_counts (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id))")
+    session.execute("CREATE"+ table +"ipdata (uid uuid,byte_transfer int,country text,host text,link_count list<int>,links list<text>,response_time int,user_agent list<text>,user_agent_count list<text>,PRIMARY KEY (uid)")
     return 1
 
 def batch_prepare(batch, fields,dest,session):
@@ -30,7 +30,7 @@ def retrv_stats(keys, host,source_conn):
         temp1.append(str(x))
     data = source_conn.multiget(temp1)
     for i in data.values():
-        links.append(i["reqtlink"])
+        links.append(i["req_link"])
         userdata.append(i['user_data'])
         if i['byte_transfer'] != '-':
             bytes += int(i['byte_transfer'])

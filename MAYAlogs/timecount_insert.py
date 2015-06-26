@@ -1,16 +1,17 @@
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
-
 from pyspark import SparkConf, SparkContext
 from pyspark_cassandra.context import *
 from cassandra.cluster import Cluster
-
 from datetime import datetime
+import multiprocessing
+import uuid
 global session, column_fam, key_space, t_init
+
 t_init = datetime.now()
 # connecting to the cassandra database to create a table
-key_space = 'ASIA_KS'
-column_fam = 'ASIA_CF'
+key_space = 'main'
+column_fam = 'parsed_data'
 session = Cluster(contact_points=['127.0.0.1'], port=9042).connect(keyspace=key_space)
 
 def spark_config():
@@ -27,55 +28,52 @@ def start_connection(rdd):
     time_rdd = rdd.select("timestamp","key").groupByKey().collect()
     pool = ConnectionPool(key_space, ['localhost:9160'], timeout=60)
     col_fam = ColumnFamily(pool, column_fam)
-    uuid = 100000
-    # function calls --> filtering ip addresses and request links with response codes in 400 and 500 series (errors)
-    error_resp1 = retrieve_errors(rdd.filter(lambda row: row['response-code'] >= '400').filter(lambda row: row['response-code'] < '500'))
-    error_resp2 = retrieve_errors(rdd.filter(lambda row: row['response-code'] >= '500'))
-    # function call
-    insert_errors(uuid, error_resp1[0], error_resp1[1], error_resp2[0], error_resp1[1])
-    print "Done inserting errors"
-    #row_count = 1
+    session.execute("CREATE TABLE time_counts (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id) )")   
+    # function call"
+    row_count = 1
+    # preparing a batchstatement
+    batch = BatchStatement()
     for timekey in time_rdd:
-        #print "Row: %s" % row_count
+        print "Row: %s" % row_count
         # function calls
-        retrieve_stats(time_rdd, timekey[1], timekey[0], uuid, col_fam)
-        uuid = uuid + 1
-        #row_count = row_count + 1
+        stats = retrieve_stats(timekey[1], timekey[0], col_fam)
+        batch_prepare(batch, stats)
+        if row_count % 500:
+            # inserting in batches of 1000
+            insert_stats(batch)
+            # creating a fresh batch
+            batch= BatchStatement()
+        row_count = row_count + 1
+    insert_stats(batch)
     return 1
 
-def retrieve_errors(rdd):
+def retrieve_stats(keys, time, cass_conn):
 
-    ip_count = rdd.map(lambda row: row["host"]).collect()
-    reqlink_count = rdd.map(lambda row: row["request-link"]).collect()
-    rdd.unpersist()
-    return ip_count, reqlink_count
-
-def retrieve_stats(rdd, keys, time, uid, cass_conn):
-
-    ip, request_type, response_code, virtual_mach, keytemp = [], [], [], [], []
-    bytes, avg_time, count = 0, 0, 0
+    ip, reqlink, reqtype, response, virtualm, keytemp = [], [], [], [], [], []
+    bytes, avg_time, count, uniq_vis, total_vis = 0, 0, 0, 0, len(keys)
+    # starting a pool of 5 worker processes
+    pool = multiprocessing.Pool(processes=5)
     for key in keys:
         keytemp.append(str(key))
     # creating an ordered dictionary containing log data retrieved from column_family
     log = cass_conn.multiget(keytemp)
     for item in log.values():
         # appending lists with their respective values   
-        ip.append(item['host']), request_type.append(item['request-type']), response_code.append(item['response-code']), virtual_mach.append(item['virtual-machine'])     
+        ip.append(item['host']), reqlink.append(item['request-link']), reqtype.append(item['request-type']), response.append(item['response-code']), virtualm.append(item['virtual-machine'])     
         if item['byte-transfer'] != '-':
             bytes += int(item['byte-transfer'])
         if item['response-time'] != '-':
             avg_time += int(item['response-time'])
             count += 1
     avg_time = avg_time/count
-    # function calls
-    host = counts(ip)
-    req_type = counts(request_type)
-    resp = counts(response_code)
-    vir_mach = counts(virtual_mach)
-    uniq_vis = len(host[0])
-    return insert_stats(uid, time, host[0], host[1], req_type[0], req_type[1], resp[0], resp[1], vir_mach[0], vir_mach[1], bytes, avg_time, uniq_vis)
+    # using the pool of workers to get results
+    results = pool.map(unique_count, [ip, reqlink, reqtype, response, virtualm])
+    pool.close()
+    pool.join()
+    uniq_vis = len(results[0][0])
+    return time, results[0][0], results[0][1], results[1][0], results[1][1], results[2][0], results[2][1], results[3][0], results[3][1], results[4][0], results[4][1] bytes, avg_time, uniq_vis, total_vis
 
-def counts(set):
+def unique_count(set):
 
     value = []
     count = []
@@ -86,27 +84,20 @@ def counts(set):
             continue
     return value, count
 
-def insert_errors(num, ip400, link400, ip500, link500):
+def batch_prepare(batch, fields):
 
-    t_ins = datetime.now()
-    session.execute("""INSERT INTO ASIA_ERROR(uid, ip_400, request_link_400, ip_500, request_link_500) VALUES (%s, %s, %s, %s, %s)""",(num, ip400, link400, ip500, link500))
-    print "Time for inserting: %s  Time Elapsed: %s" %( (datetime.now() - t_ins), (datetime.now() - t_init) )
+    batch_statement = session.prepare("INSERT INTO time_counts (id, timestamp, ip, ip_count, requesttype, requesttype_count, requestlink, requestlink_count, response, response_count , virtualmachine, virtualmachine_count, byte_transfer, response_time, unique_visits, total_visits) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+    batch.add(batch_statement, [uuid.uuid1(), fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8], fields[9], fields[10], fields[11], fields[11], fields[13], fields[14]])
     return 1
 
-def insert_stats(uid, timestamp, ip, ip_count, reqtype, reqtype_count, resp, resp_count, vm, vm_count, bytes, response_time, uniq_vis):
-    
-    t_ins = datetime.now()
-    session.execute("""INSERT INTO ASIA_COUNT(uid, timestamp, ip, ip_count, request_type, request_type_count, response_code, response_code_count, virtual_machine, virtual_machine_count, byte_transfer, response_time, unique_visits) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",(uid, timestamp, ip, ip_count, reqtype, reqtype_count, resp, resp_count, vm, vm_count, bytes, str(response_time), uniq_vis))
-    print "Time for inserting: %s  Time Elapsed: %s" %( (datetime.now() - t_ins), (datetime.now() - t_init) ) 
+def insert_fields(batch):
+
+    session.execute(batch)
+    print "Insertion time: %s  Time Elasped: %s" % ((datetime.now() - t_ins),(datetime.now() - t_init))
     return 1
 
 if __name__ == '__main__':
 
-    session.execute("""CREATE TABLE ASIA_COUNT(uid bigint, timestamp varchar, ip list<varchar>, ip_count list<int>, request_type list<varchar>, request_type_count list<int>, response_code list<varchar>, response_code_count list<int>, virtual_machine list<varchar>, virtual_machine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, PRIMARY KEY (uid) )""")
-    session.execute("""CREATE TABLE ASIA_ERROR ( uid bigint, ip_400 list<varchar>, request_link_400 list<varchar>, ip_500 list<varchar>, request_link_500 list<varchar>, PRIMARY KEY (uid) )""")
     #function call
     spark_config()
     print "Total Time Elapsed: %s" % (datetime.now() - t_init)
-
-
-

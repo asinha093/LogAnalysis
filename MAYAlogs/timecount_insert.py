@@ -28,7 +28,7 @@ def start_connection(rdd):
     time_rdd = rdd.select("timestamp","key").groupByKey().collect()
     pool = ConnectionPool(key_space, ['localhost:9160'], timeout=60)
     col_fam = ColumnFamily(pool, column_fam)
-    session.execute("CREATE TABLE time_counts (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id) )")   
+    session.execute("CREATE TABLE time_counts (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id))")   
     # function call"
     row_count = 1
     # preparing a batchstatement

@@ -1,33 +1,37 @@
 __author__ = 'rahul'
 from datetime import datetime
-from cassandra.cluster import Cluster
-from pymongo import MongoClient
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
+from pycassa.system_manager import *
 import uuid
-cluster = Cluster()
-session = cluster.connect('main')
-cass_client = ConnectionPool('main',['localhost:9160'])
-col_fam = ColumnFamily(cass_client,'parsed_data_cli')
-def insert_mongo(temp):
-    data = {"timestamp":temp[0],"reqtype":temp[1],"link":temp[2],"reqdetails":temp[3],"response":temp[4],"byte_transfer":temp[5],"response_time":temp[9] ,"user_data":temp[6],"host":temp[7],"vm":temp[9]}
-    add1 = dest.insert(data)
-    print datetime.now().time()
-    return add1
 
-def insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, os, phone_type):
-    temp = 0
+
+
+def insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, os, phone_type,conn):
     id1 = uuid.uuid1()
-    qwe = col_fam.insert(str(id1), {"timestamp":  timestamp.encode("utf-8"), "req_type": req_type.encode("utf-8"),"req_link": req_link.encode("utf-8"),"req_details": req_det.encode("utf-8"),"response": int(response),"byte_transfer": int(byte_transfer),"response_time": int(response_time), "user_agent": user_data.encode("utf-8"),"host": host.encode("utf-8"),"virt_mach": vm.encode("utf-8"),"os": os.encode("utf-8"),"device_type": phone_type.encode("utf-8")})
-    #qwe = session.execute("""INSERT INTO parsed_data (uid, timestamp, req_type, req_link ,req_details ,response, byte_transfer, response_time, user_agent,  host, virt_mach, os, phone_type,timeid)  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)""", (id1, timestamp, req_type, req_link, req_det, response, byte_transfer, response_time,user_data, host, vm, os, phone_type, temp ))
-    #encoding all the fields in UTF-8 format
-    return qwe
+    insert = conn.insert(str(id1), {"timestamp":  timestamp.encode("utf-8"), "req_type": req_type.encode("utf-8"),"req_link": req_link.encode("utf-8"),"req_details": req_det.encode("utf-8"),"response": int(response),"byte_transfer": int(byte_transfer),"response_time": int(response_time), "user_agent": user_data.encode("utf-8"),"host": host.encode("utf-8"),"virt_mach": vm.encode("utf-8"),"os": os.encode("utf-8"),"device_type": phone_type.encode("utf-8")})
+    return insert
+
+
+def create_keyspace(cluster, key_space, column_fam):
+
+    sys = SystemManager(cluster)
+    sys.create_keyspace(key_space, SIMPLE_STRATEGY, {'replication_factor': '1'})
+    validators = {'timestamp': UTF8_TYPE,'req_type': UTF8_TYPE, 'req_link': UTF8_TYPE, 'req_deatils': UTF8_TYPE, 'response': INT_TYPE, 'byte_transfer': INT_TYPE, 'response_time': INT_TYPE, 'user_agent': UTF8_TYPE, 'virt_mach': UTF8_TYPE, 'os': UTF8_TYPE, 'device_type': UTF8_TYPE, 'host': UTF8_TYPE, 'log_id': INT_TYPE}
+    sys.create_column_family(key_space, column_fam, super=False, comparator_type=UTF8_TYPE, key_validation_class=UTF8_TYPE, column_validation_classes=validators)
+    sys.create_index(key_space,column_fam,"host",UTF8_TYPE,index_type=KEYS_INDEX)
+    sys.create_index(key_space,column_fam,"timestamp",UTF8_TYPE,index_type=KEYS_INDEX)
+    sys.create_index(key_space,column_fam,"log_id",INT_TYPE,index_type=KEYS_INDEX)
+    sys.close()
+    return 1
 
 
 
 
-def extract_fields(data): #Extracting fields based on the format using find function
-    a, b = data.find('[') , data.find(']')
+
+
+def extract_fields(data,conn): #Extracting fields based on the format using find function
+    a, b = data.find('['), data.find(']')
     timestamp = data[a+1:b-1].split(' ')[0]
     date = timestamp[1:timestamp.find(':')]
     time = timestamp[timestamp.find(':')+1:timestamp.find(':')+9]
@@ -45,7 +49,6 @@ def extract_fields(data): #Extracting fields based on the format using find func
         req_link = data[a:a+data[a:].find(" ")].strip(' ')
         req_det = '-'
         data = data[a+data[a:].find(" "):]
-    #print req_link, req_det, req_type
     if data.find('(') >-1 and data.find(')') > -1:
         user_data = data[data.find('(')+1:data.find(')')-1].strip(' ')
         temp = user_data.split(";")
@@ -80,30 +83,28 @@ def extract_fields(data): #Extracting fields based on the format using find func
     except:
         byte_transfer = 0
         response_time = 0
-    if byte_transfer=='-':
+    if byte_transfer == '-':
         byte_transfer = 0
     if response_time == '-':
         response_time = 0
     if response == '-':
         response = 0
-    return insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, os, phone_type)
+    return insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, os, phone_type, conn)
 
-def source_read(dbase,src,dst):
-    global client, cass_client, col_fam, uuid, dest
-    cass_client = ConnectionPool(dbase,['localhost:9160'])
-    sour = ColumnFamily(cass_client,src)
-    i =1
-    for x in range(0,9999999):
-        t1 = datetime.now()
-        holder = sour.get(str(x))
-        qwer = datetime.now()
-        t = extract_fields(holder['content'])
-        print datetime.now() - qwer, x
+def source_read(cluster,dbase,src,dst):
+    create_keyspace(cluster,dbase,dst)
+    cass_client = ConnectionPool(dbase,[cluster])
+    source = ColumnFamily(cass_client,src)
+    dest_conn = ColumnFamily(cass_client,dst)
+    while source.get(str(x)):
+        holder = source.get(str(x))
+        t = extract_fields(holder['content'],dest_conn)
         x += 1
 
 
 if __name__ == '__main__':
-    source_read('main','random1','parsed_data')
+
+    source_read('localhost:9160','main','random1','parsed_data')
 
 
 

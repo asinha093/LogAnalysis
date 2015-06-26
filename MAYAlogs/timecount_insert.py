@@ -15,7 +15,7 @@ column_fam = 'parsed_data'
 session = Cluster(contact_points=['127.0.0.1'], port=9042).connect(keyspace=key_space)
 
 def spark_config():
-    
+
     # configuring spark with cassandra keyspace and columnfamily
     conf = SparkConf().set("spark.cassandra.connection.host", "127.0.0.1").set("spark.cassandra.connection.native.port","9042")
     sc = CassandraSparkContext(conf=conf)
@@ -23,12 +23,12 @@ def spark_config():
     return start_connection(RDD)
 
 def start_connection(rdd):
-    
+
     # collecting rows in rdd grouped by key
     time_rdd = rdd.select("timestamp","key").groupByKey().collect()
     pool = ConnectionPool(key_space, ['localhost:9160'], timeout=60)
     col_fam = ColumnFamily(pool, column_fam)
-    session.execute("CREATE TABLE time_counts (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id))")   
+    session.execute("CREATE TABLE time_counts (id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int> response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time varchar, unique_visits int, total_visits int PRIMARY KEY (id))")
     # function call"
     row_count = 1
     # preparing a batchstatement
@@ -58,8 +58,8 @@ def retrieve_stats(keys, time, cass_conn):
     # creating an ordered dictionary containing log data retrieved from column_family
     log = cass_conn.multiget(keytemp)
     for item in log.values():
-        # appending lists with their respective values   
-        ip.append(item['host']), reqlink.append(item['request-link']), reqtype.append(item['request-type']), response.append(item['response-code']), virtualm.append(item['virtual-machine'])     
+        # appending lists with their respective values
+        ip.append(item['host']), reqlink.append(item['request-link']), reqtype.append(item['request-type']), response.append(item['response-code']), virtualm.append(item['virtual-machine'])
         if item['byte-transfer'] != '-':
             bytes += int(item['byte-transfer'])
         if item['response-time'] != '-':
@@ -77,7 +77,7 @@ def unique_count(set):
 
     value = []
     count = []
-    # creating list value which contains the host/request/statuscode names and a list count containing their respective counts for a particular timestamp   
+    # creating list value which contains the host/request/statuscode names and a list count containing their respective counts for a particular timestamp
     for index in range(0,len(set)):
         if set[index] not in value:
             value.append(set[index].encode("utf-8")), count.append(set.count(set[index]))

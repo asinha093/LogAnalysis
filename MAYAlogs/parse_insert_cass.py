@@ -1,132 +1,110 @@
 __author__ = 'rahul'
-
-from datetime import datetime, timedelta
+from datetime import datetime
+from cassandra.cluster import Cluster
+from pymongo import MongoClient
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
-from pycassa.system_manager import *
-from cassandra.cluster import Cluster
-global t_init, file_path
-t_init = datetime.now()
-# initlializations
-file_path = "/home/abhinav/Downloads/MayaLogs/Asia"
+import uuid
+cluster = Cluster()
+session = cluster.connect('main')
+cass_client = ConnectionPool('main',['localhost:9160'])
+col_fam = ColumnFamily(cass_client,'parsed_data_cli')
+def insert_mongo(temp):
+    data = {"timestamp":temp[0],"reqtype":temp[1],"link":temp[2],"reqdetails":temp[3],"response":temp[4],"byte_transfer":temp[5],"response_time":temp[9] ,"user_data":temp[6],"host":temp[7],"vm":temp[9]}
+    add1 = dest.insert(data)
+    print datetime.now().time()
+    return add1
 
-def create_keyspace(key_space, column_family):
-
-    sys = SystemManager('localhost:9160')
-    sys.create_keyspace(key_space, SIMPLE_STRATEGY, {'replication_factor': '1'})
-    validators = {'timestamp': UTF8_TYPE, 'host': UTF8_TYPE, 'request-type': UTF8_TYPE, 'request-link': UTF8_TYPE, 'request-details': UTF8_TYPE, 'response-code': UTF8_TYPE, 'byte-transfer': UTF8_TYPE, 'response-time': UTF8_TYPE, 'user-agent': UTF8_TYPE, 'logid': UTF8_TYPE, 'virtual-machine': UTF8_TYPE}
-    sys.create_column_family(key_space, column_family, super=False, comparator_type=UTF8_TYPE, key_validation_class=UTF8_TYPE, column_validation_classes=validators)
-    sys.close()
-    # configuring the compaction strategy of cassandra table
-    session = Cluster(contact_points=['127.0.0.1'], port=9042).connect(keyspace=key_space) 
-    session.execute("""ALTER TABLE "ASIA_CF" WITH compaction = {'class' :  'LeveledCompactionStrategy'} AND compression = {'sstable_compression' : 'DeflateCompressor', 'chunk_length_kb' : 64}""")
-    return 1
-
-def initialize_connection(key_space, column_family):
-    
-    uuid = 100000
-    pool = ConnectionPool(key_space, ['localhost:9160'], timeout=60)
-    col_fam = ColumnFamily(pool, column_family)
-    # function call
-    extract_fields(col_fam, uuid)
-    print "Added data to the Cassandra database"
-    return 1
-
-def extract_fields(col_fam, num):
-    
-    # log_format: [01/Feb/2014:00:00:00 +0000] GET /epg/schedules/pictures/13-LWxXVA%3D%3DTW/360x270 ?roomid=1&version=15 307 - 6 Dalvik/1.6.0 (Linux; U; Android 4.3; HTC_One_max Build/JSS15J) 59.125.198.178
-    row_count = 0
-    text = open(file_path).readlines()
-    # extracting the logdata in every line
-    for data in text:
-        print "Row: %s" % row_count
-        # timestamp
-        loc1, loc2 = data.find('['), data.find(']')
-        timE = data[loc1+1 : loc2-9]
-        # calculating the numerical value of timezone in hours from the timestamp
-        timezone = float(data[loc1 : loc2].split(" ")[1].strip("+"))/100 + (float(data[loc1 : loc2].split(" ")[1].strip("+")) % 100 )/60
-        mytime = datetime.strptime(timE, '%d/%b/%Y:%H:%M')
-        # adding the timezone in the time format
-        mytime += timedelta(hours=timezone)
-        timestamp = mytime.strftime("%d.%m.%Y %H:%M")
-    
-        # request-type, request-link, req-details, userdata and host
-        data = data[loc2+2 : ]
-        loc1 = data.find('/')
-        req_type = data[ : loc1].strip(' ')
-
-        if data.find('?') > -1:
-            loc2 = data.find('?')
-            req_link = data[loc1 : loc2].strip(' ')
-            req_det = data[loc2 : loc2+data[loc2 : ].find(" ")].strip(' ')
-            data = data[loc2+data[loc2 : ].find(" ") : ]
-        else : # when there is no request-detail field
-            req_link = data[loc1 : loc2+data[loc1 : ].find(" ")].strip(' ')
-            req_det = '-'
-            data = data[loc1+data[loc1 : ].find(" ") : ]
-
-        if data.find('(') > -1 and data.find(')') > -1:
-            user_agent = data[data.find('(') + 1 : data.find(')') - 1].strip(' ')
-            host = data[data.find(')') + 1 : ].strip(' ').strip('\n')
-            data = data[ : data.find('(')]
-        else:# when there is no user-data present
-            user_agent = '-'
-            host = data[data.rfind(' ') : ].strip(' ').strip('\n')
-            data = data[ : data.rfind(' ')].strip(' ')
-    
-        # response-code and virtual-machine    
-        data = data.strip(' ')
-        try:
-            loc1 = data.find(' ')
-            loc2 = data.rfind(' ')
-            response = data[ : loc1]
-            virtualm = data[loc2+1 : ]
-            data = data[loc1+1 : loc2]
-        except:
-            response = '-'
-            virtualm = '-'
-    
-        # response-time and bytes-transfer
-        try:
-            byte_transfer = data.split(' ')[0]
-            response_time = data.split(' ')[1]
-        except:
-            byte_transfer = '-'
-            response_time = '-'
-    
-        # log-id
-        try:
-            # finding the logid if present in the request-link
-            loc1 = req_link.find('favoritesandpopular')
-            loc2 = req_link.find('recommendationsforfeeds')
-            if loc1 > -1:
-                logid = req_link[loc1+1+req_link[loc1 : ].rfind('/'):]
-            elif loc2 > -1:
-                logid = req_link[loc2+1+req_link[loc2 : ].rfind('/'):]
-            else:
-                logid = '-'
-        except:
-            logid = '-'
-        # function call
-        insert_fields(col_fam, num, host, timestamp, req_type, req_link, req_det, response, byte_transfer, user_agent, virtualm, response_time, logid)
-        num = num + 1
-        row_count = row_count + 1
-    return 1
-
-def insert_fields(col_fam, num, host, timestamp, req_type, req_link, req_det, response, byte_transfer, user_agent, virtualm, response_time, logid):
-    
-    t_ins = datetime.now()
+def insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, os, phone_type):
+    temp = 0
+    id1 = uuid.uuid1()
+    qwe = col_fam.insert(str(id1), {"timestamp":  timestamp.encode("utf-8"), "req_type": req_type.encode("utf-8"),"req_link": req_link.encode("utf-8"),"req_details": req_det.encode("utf-8"),"response": int(response),"byte_transfer": int(byte_transfer),"response_time": int(response_time), "user_agent": user_data.encode("utf-8"),"host": host.encode("utf-8"),"virt_mach": vm.encode("utf-8"),"os": os.encode("utf-8"),"device_type": phone_type.encode("utf-8")})
+    #qwe = session.execute("""INSERT INTO parsed_data (uid, timestamp, req_type, req_link ,req_details ,response, byte_transfer, response_time, user_agent,  host, virt_mach, os, phone_type,timeid)  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)""", (id1, timestamp, req_type, req_link, req_det, response, byte_transfer, response_time,user_data, host, vm, os, phone_type, temp ))
     #encoding all the fields in UTF-8 format
-    col_fam.insert(str(num), {"timestamp":  timestamp.encode("utf-8"), "host": host.encode("utf-8"), "request-type": req_type.encode("utf-8"),"request-link": req_link.encode("utf-8"),"request-details": req_det.encode("utf-8"),"response-code": response.encode("utf-8"),"byte-transfer": byte_transfer.encode("utf-8"),"response-time": response_time.encode("utf-8") ,"user-agent": user_agent.encode("utf-8"), "logid": logid.encode("utf-8"),"virtual-machine": virtualm.encode("utf-8")})
-    print "Insertion time: %s  Time Elasped: %s" % ((datetime.now() - t_ins),(datetime.now() - t_init))
-    return 1
+    return qwe
+
+
+
+
+def extract_fields(data): #Extracting fields based on the format using find function
+    a, b = data.find('[') , data.find(']')
+    timestamp = data[a+1:b-1].split(' ')[0]
+    date = timestamp[1:timestamp.find(':')]
+    time = timestamp[timestamp.find(':')+1:timestamp.find(':')+9]
+    date = datetime.strptime(date, '%d/%b/%Y').strftime('%d.%m.%Y')
+    timestamp = date + ' ' + time[:5]
+    data= data[b+1:]
+    a = data.find('/')
+    req_type = data[:a].strip(' ')
+    if data.find('?') >-1:
+        b = data.find('?')
+        req_link = data[a:b].strip(' ')
+        req_det = data[b:b+data[b:].find(" ")].strip(' ')
+        data = data[b+data[b:].find(" "):]
+    else :
+        req_link = data[a:a+data[a:].find(" ")].strip(' ')
+        req_det = '-'
+        data = data[a+data[a:].find(" "):]
+    #print req_link, req_det, req_type
+    if data.find('(') >-1 and data.find(')') > -1:
+        user_data = data[data.find('(')+1:data.find(')')-1].strip(' ')
+        temp = user_data.split(";")
+        if len(temp)>3:
+            os = temp[2]
+            phone_type = temp[3]
+        else:
+            os = '-'
+            phone_type = '-'
+        host = data[data.find(')')+1:].strip(' ').strip('\n')
+        data = data [:data.find('(')]
+    else:
+        user_data = '-'
+        os = '-'
+        phone_type = '-'
+        host = data[data.rfind(' '):].strip(' ').strip('\n')
+        data = data[:data.rfind(' ')].strip(' ')
+
+    data = data.strip(' ')
+    try:
+        a = data.find(' ')
+        b = data.rfind(' ')
+        response = data[:a]
+        vm = data[b+1:]
+        data = data[a+1:b]
+    except:
+        response = 0
+        vm = '-'
+    try:
+        byte_transfer = data.split(' ')[0]
+        response_time = data.split(' ')[1]
+    except:
+        byte_transfer = 0
+        response_time = 0
+    if byte_transfer=='-':
+        byte_transfer = 0
+    if response_time == '-':
+        response_time = 0
+    if response == '-':
+        response = 0
+    return insert_cassandra(timestamp, req_type, req_link, req_det, response, byte_transfer, user_data, host, vm, response_time, os, phone_type)
+
+def source_read(dbase,src,dst):
+    global client, cass_client, col_fam, uuid, dest
+    cass_client = ConnectionPool(dbase,['localhost:9160'])
+    sour = ColumnFamily(cass_client,src)
+    i =1
+    for x in range(0,9999999):
+        t1 = datetime.now()
+        holder = sour.get(str(x))
+        qwer = datetime.now()
+        t = extract_fields(holder['content'])
+        print datetime.now() - qwer, x
+        x += 1
+
 
 if __name__ == '__main__':
+    source_read('main','random1','parsed_data')
 
-    key_space = 'ASIA_KS'
-    column_family = 'ASIA_CF'
-    # creating Keyspace and ColumnFamily using pycassaShell commands
-    create_keyspace(key_space, column_family)
-    # function call
-    initialize_connection(key_space, column_family)
-    print "Total time elapsed: %s"%(datetime.now() - t_init)
+
+
+

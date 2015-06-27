@@ -3,32 +3,23 @@ from pycassa.columnfamily import ColumnFamily
 from cassandra.cluster import Cluster
 from pyspark import SparkConf
 from pyspark_cassandra.context import *
-
-import multiprocessing
-import datetime
-global cass_client,session
-pool = ConnectionPool('main',['localhost:9160'])
-cluster = Cluster()
-session = cluster.connect('main')
-cass_client = ConnectionPool('main',['localhost:9160'])
-
-def update_cassandra(val, keys,table):
+def update_cassandra(val, keys,table,temp):
     tid = val
-    if table == "parsed_data_cli":
+    if temp == 0:
         col_fam = ColumnFamily(cass_client,table)
         for key in keys:
             qwe = col_fam.insert(str(key), {"timeid":  tid})
             tid += 1
-    if table == "time_counts":
-        prepared_stmt = session.prepare ("UPDATE time_counts SET timeid = ? WHERE (uid = ?)")
+    if temp == 1:
+        prepared_stmt = session.prepare ("UPDATE "+table+" SET timeid = ? WHERE (uid = ?)")
         for key in keys:
             bound_stmt = prepared_stmt.bind([tid, key])
             stmt = session.execute(bound_stmt, parameters=[tid, key])
             tid += 1
     return tid
 
-def get_key():
-    query = "SELECT uid,last_timeid,last_logid FROM main_counts"
+def get_key(db):
+    query = "SELECT uid,last_timeid,last_logid FROM "+ db
     data = session.execute(query)
     for x in data:
         log_key = x[2]
@@ -41,16 +32,16 @@ def get_key():
 
     return log_key,time_key,row_key
 
-def update_key(log_key,time_key,rowid):
-    query = "UPDATE main_counts SET last_timeid=%s, last_logid=%s WHERE uid=%s "
+def update_key(db,log_key,time_key,rowid):
+    query = "UPDATE "+db+" SET last_timeid=%s, last_logid=%s WHERE uid=%s "
     data = session.execute(query,parameters=[time_key,log_key,rowid])
     return 1
 
 
-def sorted_keys(spark_context,val,table):
-    rdd = spark_context.cassandraTable("main", table).cache()
+def sorted_keys(spark_context,keyspace ,val,table,temp):
+    rdd = spark_context.cassandraTable(keyspace, table).cache()
     keys = []
-    if table == "time_counts":
+    if temp == 1:
         sort_rdd = rdd.select("timestamp","uid").sortByKey(1,1).collect()
         for x in sort_rdd:
             keys.append(x['uid'])
@@ -60,18 +51,20 @@ def sorted_keys(spark_context,val,table):
             keys.append(x['key'])
 
     rdd.unpersist()
-    return update_cassandra(val,keys,table)
+    return update_cassandra(val,keys,table,temp)
 
 
 
-def main():
+def main(keyspace, logdata,timedata, uidata ):
     conf = SparkConf().set("spark.cassandra.connection.host", "127.0.0.1").set("spark.cassandra.connection.native.port","9042")
     sc = CassandraSparkContext(conf=conf)
-    val = get_key()
-    log_key = sorted_keys(sc,val[0],"parsed_data_cli")
-    time_key = sorted_keys(sc,val[1],"time_counts")
+    cluster = Cluster()
+    session = cluster.connect(keyspace)
+    val = get_key(uidata)
+    log_key = sorted_keys(sc,keyspace,val[0],logdata,0)
+    time_key = sorted_keys(sc,keyspace,val[1],timedata,1)
     update_key(log_key,time_key,val[2])
 
 
 if __name__ == '__main__':
-    main()
+    main("main", "parsed_data_cli", "time_counts", "main_counts")

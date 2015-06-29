@@ -11,7 +11,7 @@ def update_cassandra(conn,val, keys,table,temp):
             qwe = col_fam.insert(str(key), {"logid":  tid})
             tid += 1
     if temp == 1:
-        prepared_stmt = conn.prepare ("UPDATE "+table+" SET timeid = ? WHERE (uid = ?)")
+        prepared_stmt = conn.prepare("UPDATE "+table+" SET timeid = ? WHERE (uid = ?)")
         for key in keys:
             bound_stmt = prepared_stmt.bind([tid, key])
             stmt = conn.execute(bound_stmt, parameters=[tid, key])

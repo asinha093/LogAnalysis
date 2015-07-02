@@ -24,13 +24,16 @@ class initialize(object):
         # this function creates the main keyspace in cassandra database --> keyspace name = self.keyspace
         # this function uses the pyCassa Shell commands
         sys = SystemManager(cluster)
-        sys.create_keyspace(self.keyspace, SIMPLE_STRATEGY, {'replication_factor': '1'})
-        validators = {'timestamp': UTF8_TYPE,'request_type': UTF8_TYPE, 'request_link': UTF8_TYPE, 'request_details': UTF8_TYPE, 'response_code': UTF8_TYPE, 'byte_transfer': INT_TYPE, 'response_time': INT_TYPE, 'user_agent': UTF8_TYPE, 'virtual_machine': UTF8_TYPE, 'operating_system': UTF8_TYPE, 'device_type': UTF8_TYPE, 'host': UTF8_TYPE, 'logid': INT_TYPE}
-        sys.create_column_family(self.keyspace, self.columnfamily, super=False, comparator_type=UTF8_TYPE, key_validation_class=UTF8_TYPE, column_validation_classes=validators)
-        sys.create_index(self.keyspace, self.columnfamily, "host",UTF8_TYPE,index_type=KEYS_INDEX)
-        sys.create_index(self.keyspace, self.columnfamily, "timestamp",UTF8_TYPE,index_type=KEYS_INDEX)
-        sys.create_index(self.keyspace, self.columnfamily, "logid",INT_TYPE,index_type=KEYS_INDEX)
-        sys.close()
+        try:
+            pool = ConnectionPool(self.keyspace,[cluster])
+        except:
+            sys.create_keyspace(self.keyspace, SIMPLE_STRATEGY, {'replication_factor': '1'})
+            validators = {'timestamp': UTF8_TYPE,'request_type': UTF8_TYPE, 'request_link': UTF8_TYPE, 'request_details': UTF8_TYPE, 'response_code': UTF8_TYPE, 'byte_transfer': INT_TYPE, 'response_time': INT_TYPE, 'user_agent': UTF8_TYPE, 'virtual_machine': UTF8_TYPE, 'operating_system': UTF8_TYPE, 'device_type': UTF8_TYPE, 'host': UTF8_TYPE, 'logid': INT_TYPE}
+            sys.create_column_family(self.keyspace, self.columnfamily, super=False, comparator_type=UTF8_TYPE, key_validation_class=UTF8_TYPE, column_validation_classes=validators)
+            sys.create_index(self.keyspace, self.columnfamily, "host",UTF8_TYPE,index_type=KEYS_INDEX)
+            sys.create_index(self.keyspace, self.columnfamily, "timestamp",UTF8_TYPE,index_type=KEYS_INDEX)
+            sys.create_index(self.keyspace, self.columnfamily, "logid",INT_TYPE,index_type=KEYS_INDEX)
+            sys.close()
         return 1
 
     def get_file(self):
@@ -49,6 +52,8 @@ class initialize(object):
             # extracting the logdata in every line
             fields = process.retrieve_fields(data)
             batches = process.insert_fields(batch, fields)
+            if row_count % 100000 == 0:
+                print "%s logs inserted" % row_count
             if row_count % 1000 == 0:
                 # inserting in batches of 1000
                 batches.send()
@@ -56,6 +61,7 @@ class initialize(object):
                 batch = dest_conn.batch(queue_size=1000)
             row_count = row_count + 1
         batches.send()
+        print "%s logs inserted" % row_count
         return 1
 
 class parse_insert(object):

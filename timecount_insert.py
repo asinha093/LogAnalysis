@@ -7,16 +7,13 @@ their respective counts for every unique timestamp!
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from cassandra.cluster import Cluster
-from pyspark import SparkConf, SparkContext
-from pyspark_cassandra.context import *
 from cassandra.query import BatchStatement
-from datetime import datetime
-import pathos.multiprocessing as mp
+from pathos.pools import ProcessPool as Pool
 import uuid
 
 class initialize(object):
 
-    def __init__(self, keyspace, source, dest, sc, host, thriftport, port):
+    def __init__(self, keyspace, source, dest, sc, host, thriftport, port, db):
         # initializing the class variables
         self.keyspace = keyspace
         self.source = source
@@ -24,12 +21,31 @@ class initialize(object):
         self.sc = sc
         self.host = host
         self.thriftport = thriftport
-        self.port = port        
+        self.port = port
+        self.db = db
 
     def create_table(self, dest, session):
 
         session.execute("CREATE TABLE IF NOT EXISTS "+dest+"(id uuid, timestamp varchar, ip list<varchar>, ip_count list<int>, requesttype list<varchar>, requesttype_count list<int>, requestlink list<varchar>, requestlink_count list<int>, response list<varchar>, response_count list<int>, virtualmachine list<varchar>, virtualmachine_count list<int>, byte_transfer bigint, response_time int, unique_visits int, total_visits int, last_timeid int, PRIMARY KEY (id))")
         return 1
+
+    def get_key(self, db, session):
+
+        query = "SELECT id, last_timeid FROM "+ db
+        try:
+            getdata = session.execute(query)
+            for data in getdata:
+                time_key = data[1]
+        except:
+            time_key = 1
+        return time_key
+
+
+    def get_timestamp(self,session,table,key):
+        
+        query = "SELECT timestamp FROM "+ table +" WHERE logid="+ str(key)
+        data = session.execute(query)
+        return data[0]
 
     def initialize_connection(self):
     
@@ -37,11 +53,15 @@ class initialize(object):
         pool = ConnectionPool(self.keyspace, [cluster], timeout=30)
         col_fam = ColumnFamily(pool, self.source)
         session = Cluster(contact_points=[self.host], port=self.port).connect(keyspace=self.keyspace)
+        session.default_timeout=30
         # configuring spark with cassandra keyspace and columnfamily
-        #conf = SparkConf().set("spark.cassandra.connection.host", self.host).set("spark.cassandra.connection.native.port", str(self.port))
-        #sc = CassandraSparkContext(conf=conf)
         rdd = self.sc.cassandraTable(self.keyspace, self.source).cache()
-        time_rdd = rdd.select("timestamp", "key").groupByKey().collect() # collecting rows in rdd grouped by timestamp
+        val = self.get_key(self.db, session)
+        if val == 1:
+            time_rdd = rdd.select("timestamp", "key").groupByKey().collect() # collecting rows in rdd grouped by timestamp
+        else:
+            time = self.get_timestamp(session,self.dest,val)
+            time_rdd = rdd.select("timestamp", "key").filter(lambda row: row.timestamp > time).groupByKey().collect()
         # function call
         self.create_table(self.dest, session)
         batch = BatchStatement() # preparing a batchstatement
@@ -89,7 +109,8 @@ class retrieve_count(object):
         # creating an ordered dictionary containing log data retrieved from column_family
         log = self.cass_conn.multiget(keytemp)
         # starting a pool of 5 worker processes
-        pool = mp.ProcessingPool(5)
+        pool = Pool()
+        pool.ncpus = 5
         for item in log.values():
             # appending lists with their respective values   
             ip.append(item['host']), reqlink.append(item['request_link']), reqtype.append(item['request_type']), response.append(str(item['response_code'])), virtualm.append(item['virtual_machine'])     
@@ -101,6 +122,8 @@ class retrieve_count(object):
         avg_time = avg_time/count
         # using the pool of workers to get results
         results = pool.map(self.unique_count, [ip, reqtype, reqlink, response, virtualm])
+        pool.close()
+        pool.join()
         uniq_vis = len(results[0][0])
         return self.time, results[0][0], results[0][1], results[1][0], results[1][1], results[2][0], results[2][1], results[3][0], results[3][1], results[4][0], results[4][1], bytes, avg_time, uniq_vis, total_vis
 

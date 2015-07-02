@@ -7,8 +7,6 @@ for the future!
 from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from cassandra.cluster import Cluster
-from pyspark import SparkConf, SparkContext
-from pyspark_cassandra.context import *
 from cassandra.query import BatchStatement
 from datetime import datetime
 import time
@@ -37,9 +35,6 @@ class initialize(object):
         pool = ConnectionPool(self.keyspace, [cluster], timeout=30)
         col_fam = ColumnFamily(pool, self.source)
         session = Cluster(contact_points=[self.host], port=self.port).connect(keyspace=self.keyspace)
-        # configuring spark with cassandra keyspace and columnfamily
-        #conf = SparkConf().set("spark.cassandra.connection.host", self.host).set("spark.cassandra.connection.native.port",str(self.port))
-        #sc = CassandraSparkContext(conf=conf)
         rdd = self.sc.cassandraTable(self.keyspace, self.source)
         time_rdd = rdd.select("timestamp", "key").groupByKey().collect() # collecting rows in rdd grouped by timestamp
         # function call

@@ -8,7 +8,6 @@ from cassandra.query import panda_factory
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter1d
-from datetime import datetime
 import warnings
 import uuid
 
@@ -206,8 +205,3 @@ class forecast(object):
 		plt.xlim([x[0], x[-1]])
 		plt.show()
 		return y, y_pred
-
-if __name__=='__main__':
-
-	init = initialize('main', 'traffic', 'main_counts1', '127.0.0.1', 9042)
-	init.initialize_connection()

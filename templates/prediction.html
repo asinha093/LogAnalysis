@@ -1,0 +1,79 @@
+{% extends "main.html" %}
+{% block content %}
+<div class="col-sm-10">
+      	
+      <!-- column 2 -->	
+       <h3><i class="glyphicon glyphicon-dashboard"></i>PREDICTION ANALYSIS</h3>  
+            
+       <hr>
+      
+	   <div class="row">
+            <!-- center left-->	
+        <div class="col-md-12">
+          <table>
+
+            <caption>Forecast</caption>
+              <thead class="col-sm-4">
+
+                  <select class="form-control js-select">
+                    <option value="">-select chart type-</option>  
+                    <option value="2">BYTES TRANSFERED</option>
+                    <option value="3">GET REQUESTS</option>
+                    <option value="4">POST REQUESTS</option>
+                    <option value="5">TOTAL REQUESTS</option>
+                    <option value="1">TOTAL VISITS</option>
+                  </select>
+              </thead>
+        <tbody>
+        <tr>
+            <td><div id="container1" class="well js-box" style="height: 600px; width: 850px"></div></td>
+        </tr>
+        <tr>
+            <td><div id="container2" class="well js-box" style="height: 600px; width: 850px"></div></td>
+        </tr>
+        <tr>
+            <td><div id="container3" class="well js-box" style="height: 600px; width: 850px"></div></td>
+        </tr>
+        <tr>
+            <td><div id="container4" class="well js-box" style="height: 600px; width: 850px"></div></td>
+        </tr>
+        <tr>
+            <td><div id="container5" class="well js-box" style="height: 600px; width: 850px"></div></td>
+        </tr>
+        </tbody>
+        <table>
+
+      </div>
+{% endblock %}
+{% block scripts %}
+           <script type="text/javascript" src="http://code.highcharts.com/highcharts.js"></script>
+		<script type="text/javascript">
+
+			var time_temp = '{{ timestamp|tojson|safe  }}'
+			var val1_temp = '{{ val1|tojson|safe }}'
+      var val2_temp = '{{ val2|tojson|safe }}'
+      var val3_temp = '{{ val3|tojson|safe }}'
+      var val4_temp = '{{ val4|tojson|safe }}'
+      var val5_temp = '{{ val5|tojson|safe }}'
+      var val6_temp = '{{ val6|tojson|safe }}'
+      var val7_temp = '{{ val7|tojson|safe }}'
+      var val8_temp = '{{ val8|tojson|safe }}'
+      var val9_temp = '{{ val9|tojson|safe }}'
+      var val10_temp = '{{ val10|tojson|safe }}'
+
+            var time_js = JSON.parse(time_temp)
+            var val1_js = JSON.parse(val1_temp)
+            var val2_js = JSON.parse(val2_temp)
+            var val3_js = JSON.parse(val3_temp)
+            var val4_js = JSON.parse(val4_temp)
+            var val5_js = JSON.parse(val5_temp)
+            var val6_js = JSON.parse(val6_temp)
+            var val7_js = JSON.parse(val7_temp)
+            var val8_js = JSON.parse(val8_temp)
+            var val9_js = JSON.parse(val9_temp)
+            var val10_js = JSON.parse(val10_temp)
+
+		</script>
+
+    <script src="{{ url_for('static', filename='main.js')  }}"></script>
+{% endblock %}

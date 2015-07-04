@@ -1,0 +1,35 @@
+
+{% extends "main.html" %}
+{% block content %}
+<div id="demo">
+	<div id="example">
+	</div>
+
+		</div>
+	</div>
+  </div><!--/row-->
+  <!-- /upper section -->
+
+      <!-- left -->
+
+
+  <!-- lower section -->
+
+</div>
+{% endblock %}
+{% block scripts %}
+<!-- /Main -->
+	<!-- script references -->
+
+		<script src="{{ url_for('static', filename='datatables.js')  }}"></script>
+
+        <script type="text/javascript">
+		    var values = '{{ index }}'
+			var data_temp = '{{ data|tojson|safe }}'
+			var data_js = JSON.parse(data_temp)
+            var data_header_temp = '{{ data_header|tojson|safe }}'
+            var data_header_js = JSON.parse(data_header_temp)
+
+		</script>
+		<script src="{{ url_for('static', filename='table.js')  }}"></script>
+	{% endblock %}

@@ -1,0 +1,86 @@
+
+{% extends "main.html" %}
+{% block content %}
+<ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a href="#chart1" aria-controls="home" role="tab" data-toggle="tab">Unique Visits</a></li>
+                <li role="presentation"><a href="#chart2" aria-controls="profile" role="tab" data-toggle="tab">Response Time</a></li>
+                
+</ul>
+    <div id="my-tab-content" class="tab-content">
+        <div class="tab-pane active" id="chart1">
+        
+        </div>
+        <div class="tab-pane" id="chart2" >
+
+
+        </div>
+    </div>
+
+    <div id="table1" class="col-sm-6">
+        <h3>Device Type</h3>
+        <div id="devicetable" >
+            <div id="devicedata">
+
+
+            </div>
+        </div>
+    </div>
+    <div id="table2" class="col-sm-6">
+        <h3>User Agent</h3>
+        <div id="vmtable" >
+            <div id="vmdata">
+
+
+            </div>
+        </div>
+    </div>
+
+    <div id="piechart" class="col-sm-5" style="width: 600px; height: 400px; margin: 4% auto">
+
+
+    </div>
+ <div id="piechart2" class="col-sm-5" style="width: 400px; height: 400px; margin: 2% auto">
+
+
+    </div>
+<div id="table3" class="col-sm-6">
+        <h3>User Agent</h3>
+        <div id="errortable" >
+            <div id="errordata">
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+{% endblock %}
+{% block scripts %}
+
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="{{ url_for('static', filename='datatables.js')  }}"></script>
+
+
+<script>
+
+      var time = JSON.parse( '{{ timestamp|tojson|safe  }}')
+      var time1 = JSON.parse( '{{ timestamp|tojson|safe  }}')
+      var y1 = JSON.parse( '{{ resp|tojson|safe  }}')
+      var y2 = JSON.parse( '{{ tvis|tojson|safe  }}')
+      var y3 = JSON.parse( '{{ uvis|tojson|safe  }}')
+      var vm_js = JSON.parse( '{{ vm|tojson|safe }}' )
+      var vm_c_js = JSON.parse( '{{ vm_c|tojson|safe }}' )
+      var device_js = JSON.parse( '{{ phn|tojson|safe }}' )
+      var os_temp = JSON.parse( '{{ os_temp|tojson|safe }}' )
+      var error_js = JSON.parse( '{{ error_data|tojson|safe }}' )
+      var req_js = JSON.parse( '{{ req|tojson|safe }}' )
+      var reqc_js = JSON.parse( '{{ reqc|tojson|safe }}' )
+</script>
+
+
+<script src="{{ url_for('static', filename='original.js')  }}"></script>
+
+
+{% endblock %}

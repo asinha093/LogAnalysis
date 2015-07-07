@@ -28,7 +28,6 @@ if __name__ == '__main__':
         if settings[option] == '-' :
             settings[option] = Config.get("default_settings", option)
     # creating class instances and calling them in their respective files
-    print settings
     global sc
     conf = SparkConf().set("spark.cassandra.connection.host", settings['spark_cluster']).set("spark.cassandra.connection.native.port", settings['spark_port'])
     sc = CassandraSparkContext(conf=conf)

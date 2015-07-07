@@ -1,4 +1,3 @@
-__author__ = 'abhinav'
 '''
 This file groups the timestamps and keys in the main columnfamily, calculates the counts of other fields present in the table and
 inserts these counts to a new cassandra table: time_counts. So the new table time_counts now contains a list of every other field and

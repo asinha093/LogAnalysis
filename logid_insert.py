@@ -1,4 +1,3 @@
-__author__ = 'rahul'
 '''
 This file retieves the last_logid column in the table main_count and inserts the new log_ids starting from the retrieved value in the table parsed_data 
 '''

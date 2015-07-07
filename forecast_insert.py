@@ -1,4 +1,3 @@
-__author__ = 'abhinav'
 '''
 This file calculates the predicted values on a time interval using the data inserted in the table: traffic.
 The file stores these predicted values (a list) into a new cassandra table: main_counts which will be used for building the UI !

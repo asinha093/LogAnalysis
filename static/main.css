@@ -62,3 +62,6 @@ padding-top:4%
 .data-holder{
 width:100%
 }
+.nav > li > a {
+    color: black;
+}

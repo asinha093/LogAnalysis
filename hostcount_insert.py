@@ -1,4 +1,3 @@
-__author__ = 'rahul'
 '''
 This file groups the hosts and keys in the main columnfamily, calculates the counts of other fields present in the table and
 inserts these counts to a new cassandra table: ipdata. So the new table main_counts now contains a list of other fields and

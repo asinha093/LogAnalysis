@@ -1,4 +1,3 @@
-__author__ = 'abhinav'
 '''
 This file retieves the last_timeid column in the table main_count and inserts the new time_ids starting from the retrieved value in the table time_counts 
 '''

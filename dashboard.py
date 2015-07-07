@@ -4,19 +4,27 @@ from pycassa.pool import ConnectionPool
 from pycassa.columnfamily import ColumnFamily
 from pycassa.index import *
 from cassandra.cluster import Cluster
-import pycassa
+import ConfigParser
 from cassandra.query import SimpleStatement
 from datetime import datetime
-import json
-global cassandra
+global cassandra, settings
+cfgfile = open("configuration.ini",'r')
+Config = ConfigParser.SafeConfigParser()
+Config.read("configuration.ini")
+options = Config.options("user_settings")
+settings = {}
+for option in options:
+    settings[option] = Config.get("user_settings", option)
+    if settings[option] == '-' :
+        settings[option] = Config.get("default_settings", option)
 cassandra = CassandraCluster()
 app = Flask(__name__)
-app.config['CASSANDRA_NODES'] = ['127.0.0.1']  # can be a string or list of nodes
+app.config['CASSANDRA_NODES'] = [settings['cass_cluster']]  # can be a string or list of nodes
 @app.route('/')
 def homepage(chartID = 'chart_ID', chart_type = 'line', chart_height = 600):
     t11 = datetime.now()
     session = cassandra.connect()
-    session.set_keyspace('test')
+    session.set_keyspace(settings['cluster_name'])
     session.default_timeout = 100
     try :
         key1 = int(request.args.get('key'))
@@ -83,19 +91,27 @@ def homepage(chartID = 'chart_ID', chart_type = 'line', chart_height = 600):
             error_data[temp1+j].append(user_row[2][j])
             error_data[temp1+j].append("500")
             error_data[temp1+j].append(user_row[3][j])
+    query5 = "SELECT country, country_count FROM main_count"
+    statement5 = SimpleStatement(query5, fetch_size=150)
+    temp_data = session.execute(statement5)
+    country, country_count = [], []
+    for user_row in temp_data:
+        if user_row[0]:
+            country.append(user_row[0])
+            country_count.append(user_row[1])
 
 
 
 
 
 
-    return render_template('homepage.html', chartID=chartID, timestamp=time, resp=response_time, tvis=total_visits, uvis=unique_visits, req = reqtype, reqc = reqtype_count, vm = vm_list, vm_c= vm_count, os_temp = os_data, phn = device_list, phn_c= device_count, error_data = error_data)
+    return render_template('homepage.html', chartID=chartID, timestamp=time, resp=response_time, tvis=total_visits, uvis=unique_visits, req = reqtype, reqc = reqtype_count, vm = vm_list, vm_c= vm_count, os_temp = os_data, phn = device_list, phn_c= device_count, error_data = error_data,country = country, country_count = country_count)
 
 @app.route('/data')
 def datatable():
     session = cassandra.connect()
-    session.set_keyspace('test')
-    cass_client = ConnectionPool('test',['localhost:9160'], timeout=60)
+    session.set_keyspace(settings['cluster_name'])
+    cass_client = ConnectionPool(settings['cluster_name'],[settings['cass_cluster']+':'+settings['thrift_port']], timeout=60)
     col_fam = ColumnFamily(cass_client,'parsed_data')
     session.default_timeout = 100
     key1 = request.args.get('key')
@@ -124,7 +140,7 @@ def datatable():
 @app.route('/forecast')
 def forecast(chartID = 'chart_ID', chart_type = 'spline', chart_height = 150):
     session = cassandra.connect()
-    session.set_keyspace("test")
+    session.set_keyspace(settings['cluster_name'])
     session.default_timeout = 100
     key1 = request.args.get('key')
 
@@ -158,8 +174,8 @@ def forecast(chartID = 'chart_ID', chart_type = 'spline', chart_height = 150):
 @app.route('/getinfo')
 def datale():
     session = cassandra.connect()
-    session.set_keyspace('test')
-    cass_client = ConnectionPool('test',['localhost:9160'], timeout=60)
+    session.set_keyspace(settings['cluster_name'])
+    cass_client = ConnectionPool(settings['cluster_name'],[settings['cass_cluster']+':'+settings['thrift_port']], timeout=60)
     col_fam = ColumnFamily(cass_client,'parsed_data')
     session.default_timeout = 100
     key1 = request.args.get('key')
@@ -180,4 +196,6 @@ def datale():
     return render_template('datatable.html', data= data, data_header = data_header,index = len(test))
 
 if __name__ == "__main__":
+
+    # creating class instances and calling them in their respective files
     app.run(debug = True, passthrough_errors=True, threaded=True)

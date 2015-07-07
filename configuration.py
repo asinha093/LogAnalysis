@@ -30,7 +30,7 @@ def method():
     data['cluster_name'] = request.form['cluster_name']
     data['cql_port'] = request.form['cql_port']
 
-    default = {'cass_cluster':'127.0.0.1', 'thrift_port':'9160', 'cluster_name':'test', 'spark_cluster': '127.0.0.1' , 'spark_port':'9042','cql_port':'9042'}
+    default = {'cass_cluster':'127.0.0.1', 'thrift_port':'9160', 'cluster_name':'main', 'spark_cluster': '127.0.0.1' , 'spark_port':'9042', 'cql_port':'9042'}
     cfgfile = open("configuration.ini",'w')
     Config = ConfigParser.SafeConfigParser()
     Config.read("configuration.ini")

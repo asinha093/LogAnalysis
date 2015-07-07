@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-		<meta charset="utf-8">
-		<title>Log Analysis Tool</title>
-		<meta name="generator" content="Bootply" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-		<link href="{{ url_for('static', filename='bootstrap.min.css')  }}" rel="stylesheet">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Log Analysis Tool</title>
+    <meta name="generator" content="Bootply" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href="{{ url_for('static', filename='bootstrap.min.css')  }}" rel="stylesheet">
         <script src="{{  url_for('static', filename='html5.js') }}"></script>
-		<link href="{{ url_for('static', filename='bootstrap.min.css')  }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='bootstrap.min.css')  }}" rel="stylesheet">
       <link href="{{ url_for('static', filename='main.css')  }}" rel="stylesheet">
-	</head>
+  </head>
 <!-- Header -->
 <div id="top-nav" class="navbar navbar-inverse navbar-static-top">
   <div class="container">
@@ -42,76 +42,66 @@
   
   <!-- upper section -->
   <div class="row">
-	<div class="col-sm-2">
-      <!-- left -->
-      <!--<h3><i class="glyphicon glyphicon-briefcase"></i> Toolbox</h3>
-      <hr>
-      
-      <ul class="nav nav-stacked">
-        <li><a href="javascript:;"><i class="glyphicon glyphicon-flash"></i> Stats</a></li>
-        <li><a href="javascript:;"><i class="glyphicon glyphicon-link"></i> Link Statistics</a></li>
-        <li><a href="javascript:;"><i class="glyphicon glyphicon-list-alt"></i> Prediction Results</a></li>
 
-        <li><a href="javascript:;"><i class="glyphicon glyphicon-plus"></i> Advanced..</a></li>
-      </ul>-->
-      
-      <hr>
-      
-  	</div><!-- /span-3 -->
-	<div id ="data" class="col-sm-10" style="font-size:10px">
-      <h3><i class="glyphicon glyphicon-briefcase"></i> Tool Settings</h3>
-	<form class="form-horizontal" role="form" action="/config" method="post">
-  <div class="form-group">
-    <label class="control-label col-sm-2" >Application Name</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" name="application_name" placeholder="Enter email">
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="control-label col-sm-2" >Cassandra Cluster</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" name="cass_cluster" placeholder="Cassandra Cluster IP">
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="control-label col-sm-2" >Spark Cassandra Configuararion</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" name="spark_config" placeholder="Default:127.0.0.1:9042">
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="control-label col-sm-2" >Additional Spark Configuararion</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" name="spark_extra_config" placeholder="Default:127.0.0.1:9042">
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="control-label col-sm-2" >Cassandra Cluster Name</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" name="cluster_name" placeholder="Default: main">
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="control-label col-sm-2" >CQL Transport Port</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" name="cql_port" placeholder="Default: 9160">
-    </div>
-  </div>
- <div class="form-group">
-    <label class="control-label col-sm-2" >File Location</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" name="file_location" >
-    </div>
-  </div>
+  
+  <div id ="data" class="col-sm-10" style="font-size:10px">
 
-  <div class="form-group">
-    <div class="col-sm-offset-2 col-sm-10">
-      <button type="submit" class="btn btn-default">Submit</button>
-    </div>
-  </div>
-</form>
+      <h3><span class="glyphicon glyphicon-briefcase" ></span> Configuration</h3>
+      <br>
 
-	</div>
+    </br>
+        <form class="form-horizontal" role="form" action="/config" method="post">
+        <div class="form-group">
+          <label class="control-label col-sm-2" >Application Name</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="application_name" placeholder="Enter email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" >Cassandra Cluster</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="cass_cluster" placeholder="Default: 127.0.0.1:9160">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" >Spark Cassandra Configuararion</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="spark_config" placeholder="Default: 127.0.0.1:9042">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" >Additional Spark Configuararion</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="spark_extra_config" placeholder="Default: 127.0.0.1:9042">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" >Cassandra Cluster Name</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="cluster_name" placeholder="Default: main">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label col-sm-2" >CQL Transport Port</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="cql_port" placeholder="Default: 9042">
+          </div>
+        </div>
+       <div class="form-group">
+          <label class="control-label col-sm-2" >File Location</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="file_location" placeholder="Type full location of log file without quotes">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default">Submit</button>
+          </div>
+        </div>
+      </form>
+
+  </div>
   </div><!--/row-->
   <!-- /upper section -->
 
@@ -126,17 +116,17 @@
 
 
   
-	<!-- script references -->
-		<script type="text/javascript">
+  <!-- script references -->
+    <script type="text/javascript">
 
 
-		</script>
-		<script src="{{ url_for('static', filename='jquery.min.js')  }}"></script>
-		<script src="{{ url_for('static', filename='bootstrap.min.js')  }}"></script>
+    </script>
+    <script src="{{ url_for('static', filename='jquery.min.js')  }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.min.js')  }}"></script>
 
 
-			<script src="{{ url_for('static', filename='jquery.min.js')  }}"></script>
+      <script src="{{ url_for('static', filename='jquery.min.js')  }}"></script>
 
 
-	</body>
+  </body>
 </html>

@@ -9,8 +9,6 @@ from cassandra.cluster import Cluster
 from cassandra.query import SimpleStatement
 from datetime import datetime
 from geoip import geolite2
-from pyspark import SparkConf
-from pyspark_cassandra.context import *
 import requests
 import uuid
 
@@ -115,11 +113,3 @@ class retrieve_location(object):
             stmt = session.execute(bound_stmt)
             print country[index], uid[index]
         return 1
-if __name__ == '__main__':
-
-    t_init = datetime.now()
-    conf = SparkConf().set("spark.cassandra.connection.host", '127.0.0.1').set("spark.cassandra.connection.native.port",'9042')
-    sc = CassandraSparkContext(conf=conf)
-    getdata = initialize_insert('test', 'main_count', 'ipdata', '127.0.0.1', 9042)
-    getdata.initialize_connection()
-    print "Total Time Elapsed: %s" % (datetime.now() - t_init)

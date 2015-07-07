@@ -5,15 +5,10 @@ a time consuming task for IT teams. Timely analysis of performance problems and 
 This Log Analytics platform automates the analysis of log data to enable performance tuning, troubleshooting, and meeting compliance requirements.
 It also has the ability to support multiple log formats.
 
-## Getting Started
+## Online Documentation
 
-Set-Up the following to start working with the project:
-
-* [Python](https://bitbucket.org/rahulfission/loganalysis/wiki/python)
-* [Cassandra](https://bitbucket.org/rahulfission/loganalysis/wiki/cassandra)
-* [Spark](https://bitbucket.org/rahulfission/loganalysis/wiki/spark)
-* [Spark-Cassandra Connector](https://bitbucket.org/rahulfission/loganalysis/wiki/sparkcassandra)
-* [Flask](https://bitbucket.org/rahulfission/loganalysis/wiki/flask)
+* [Getting Started](https://bitbucket.org/rahulfission/loganalysis/wiki/gettingstarted)
+* [Download the Project](https://bitbucket.org/rahulfission/loganalysis/wiki/download)
 
 ## Current Features
 

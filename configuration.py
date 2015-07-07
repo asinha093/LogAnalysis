@@ -4,7 +4,7 @@ import ConfigParser
 
 app = Flask(__name__)
 
-@app.route('/main/')
+@app.route('/')
 def index():
     return render_template('config_main.html' )
 

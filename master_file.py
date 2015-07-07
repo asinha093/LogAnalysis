@@ -10,14 +10,14 @@ import main_counts as file5
 import hostcount_insert as file6
 import logid_insert as file7
 import timeid_insert as file8
+
 import ConfigParser
 from pyspark import SparkConf
 from pyspark_cassandra.context import *
 from datetime import datetime
 
-# configuring spark with cassandra keyspace and columnfamily
-
 if __name__ == '__main__':
+
     cfgfile = open("configuration.ini",'r')
     Config = ConfigParser.SafeConfigParser()
     Config.read("configuration.ini")
@@ -27,11 +27,12 @@ if __name__ == '__main__':
         settings[option] = Config.get("user_settings", option)
         if settings[option] == '-' :
             settings[option] = Config.get("default_settings", option)
-    # creating class instances and calling them in their respective files
-    global sc
+
+    # configuring spark with cassandra keyspace and columnfamily
     conf = SparkConf().set("spark.cassandra.connection.host", settings['spark_cluster']).set("spark.cassandra.connection.native.port", settings['spark_port'])
     sc = CassandraSparkContext(conf=conf)
 
+    # creating class instances and calling them in their respective files
     print "parse_insert_cass"
     t_init = datetime.now()
     init = file1.initialize(settings['cluster_name'], 'parsed_data', settings['file_location'], settings['cass_cluster'], settings['thrift_port'])

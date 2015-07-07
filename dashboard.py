@@ -1,3 +1,7 @@
+'''
+This file runs the user interface of the project.
+Please redirect to the http://www.localhost:5000/ after running the script
+'''
 from flask import Flask, render_template, jsonify, request
 from flask_cassandra import CassandraCluster
 from pycassa.pool import ConnectionPool
@@ -6,7 +10,7 @@ from pycassa.index import *
 from cassandra.cluster import Cluster
 import ConfigParser
 from cassandra.query import SimpleStatement
-from datetime import datetime
+
 global cassandra, settings
 cfgfile = open("configuration.ini",'r')
 Config = ConfigParser.SafeConfigParser()
@@ -22,7 +26,7 @@ app = Flask(__name__)
 app.config['CASSANDRA_NODES'] = [settings['cass_cluster']]  # can be a string or list of nodes
 @app.route('/')
 def homepage(chartID = 'chart_ID', chart_type = 'line', chart_height = 600):
-    t11 = datetime.now()
+
     session = cassandra.connect()
     session.set_keyspace(settings['cluster_name'])
     session.default_timeout = 100
@@ -99,16 +103,11 @@ def homepage(chartID = 'chart_ID', chart_type = 'line', chart_height = 600):
         if user_row[0]:
             country.append(user_row[0])
             country_count.append(user_row[1])
-
-
-
-
-
-
     return render_template('homepage.html', chartID=chartID, timestamp=time, resp=response_time, tvis=total_visits, uvis=unique_visits, req = reqtype, reqc = reqtype_count, vm = vm_list, vm_c= vm_count, os_temp = os_data, phn = device_list, phn_c= device_count, error_data = error_data,country = country, country_count = country_count)
 
 @app.route('/data')
 def datatable():
+
     session = cassandra.connect()
     session.set_keyspace(settings['cluster_name'])
     cass_client = ConnectionPool(settings['cluster_name'],[settings['cass_cluster']+':'+settings['thrift_port']], timeout=60)
@@ -139,6 +138,7 @@ def datatable():
 
 @app.route('/forecast')
 def forecast(chartID = 'chart_ID', chart_type = 'spline', chart_height = 150):
+
     session = cassandra.connect()
     session.set_keyspace(settings['cluster_name'])
     session.default_timeout = 100
@@ -151,7 +151,6 @@ def forecast(chartID = 'chart_ID', chart_type = 'spline', chart_height = 150):
     query1 = "SELECT time_sorted,bytes_original,bytes_predicted,gets_original,gets_predicted FROM main_count"  # users contains 100 rows
     statement1 = SimpleStatement(query1, fetch_size=100)
     i = 0
-    t11 = datetime.now()
     data1 = session.execute(statement1)
     for user_row in data1:
         time = (user_row[0])
@@ -173,6 +172,7 @@ def forecast(chartID = 'chart_ID', chart_type = 'spline', chart_height = 150):
 
 @app.route('/getinfo')
 def datale():
+
     session = cassandra.connect()
     session.set_keyspace(settings['cluster_name'])
     cass_client = ConnectionPool(settings['cluster_name'],[settings['cass_cluster']+':'+settings['thrift_port']], timeout=60)

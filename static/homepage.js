@@ -14,8 +14,7 @@ for (i =0; i< time.length; i++){
     t[i] = t[i].split(" ")
     var qwe = t[i][0].split(".")
     var wer = t[i][1].split(":")
-    console.log(qwe)
-    console.log(wer)
+
     t[i] = moment.utc(time[i], "DD.MM.YYYY HH:mm").unix()*1000;
     time[i] = t[i]
 }
@@ -374,7 +373,6 @@ for (i =0;i< country_js[0].length;i++){
         sample.push(temp)
 
         }
-console.log(sample)
 $(function () {
         var mapData = Highcharts.geojson(Highcharts.maps['custom/world']);
 
@@ -382,7 +380,7 @@ $(function () {
 
         $("#mapchart1").highcharts('Map', {
             chart : {
-                borderWidth : 1
+                borderWidth : 0
             },
 
             title: {
@@ -390,7 +388,7 @@ $(function () {
             },
 
             subtitle : {
-                text : 'Demo of Highcharts map with bubbles'
+                text : 'Visitor Distribution based on the country'
             },
 
             legend: {
@@ -415,10 +413,10 @@ $(function () {
                 name: 'Visits',
                 joinBy: ['iso-a2', 'code'],
                 data: sample,
-                minSize: '4%',
-                maxSize: '12%',
+                minSize: '3%',
+                maxSize: '20%',
                 tooltip: {
-                    pointFormat: '{point.code}: {point.data} Visitors'
+                    pointFormat: '{point.code}: {point.z} Visitors'
                 }
             }]
         });

@@ -43,6 +43,7 @@
 
 
     </div>
+<div id="mapchart1" class="col-sm-12"></div>
 <div id="table3" class="col-sm-6">
         <h3>User Agent</h3>
         <div id="errortable" >
@@ -56,11 +57,19 @@
 
 
 
+
 {% endblock %}
 {% block scripts %}
 
 <script src="http://code.highcharts.com/highcharts.js"></script>
 <script src="{{ url_for('static', filename='datatables.js')  }}"></script>
+<script type="text/javascript" src="http://code.highcharts.com/highcharts-more.js"></script>
+		<script type="text/javascript" src="http://code.highcharts.com/maps/modules/map.js"></script>
+
+
+		<script src="http://code.highcharts.com/maps/modules/data.js"></script>
+		<script src="http://code.highcharts.com/maps/modules/exporting.js"></script>
+		<script src="http://code.highcharts.com/mapdata/custom/world.js"></script>
 
 
 <script>
@@ -77,10 +86,12 @@
       var error_js = JSON.parse( '{{ error_data|tojson|safe }}' )
       var req_js = JSON.parse( '{{ req|tojson|safe }}' )
       var reqc_js = JSON.parse( '{{ reqc|tojson|safe }}' )
+      var country_js = JSON.parse( '{{ country|tojson|safe }}' )
+      var countryc_js = JSON.parse( '{{ country_count|tojson|safe }}' )
 </script>
 
 
-<script src="{{ url_for('static', filename='original.js')  }}"></script>
+<script src="{{ url_for('static', filename='homepage.js')  }}"></script>
 
 
 {% endblock %}

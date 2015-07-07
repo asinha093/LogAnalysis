@@ -10,56 +10,56 @@ var data9 = new Array();
 var data10 = new Array();
 for (i = 0; i < parseInt(0.70*time_js.length); i++){
     data1[i] = new Array();
-    data1[i].push(time_js[i],val1_js[i])
+    data1[i].push((time_js[i]*1000)+19800000,val1_js[i])
     }
 var j = parseInt(0.70*time_js.length)+1;
 for (i = 0; i < val2_js.length; i++){
     data2[i] = new Array();
-    data2[i].push(time_js[j],val2_js[i])
+    data2[i].push((time_js[j]*1000)+19800000,val2_js[i])
     j++;
     }
 
 for (i = 0; i < parseInt(0.70*time_js.length); i++){
     data3[i] = new Array();
-    data3[i].push(time_js[i],val3_js[i])
+    data3[i].push((time_js[i]*1000)+19800000,val3_js[i])
     }
 var j = parseInt(0.70*time_js.length)+1;
 for (i = 0; i < val4_js.length; i++){
     data4[i] = new Array();
-    data4[i].push(time_js[j],val4_js[i])
+    data4[i].push((time_js[j]*1000)+19800000,val4_js[i])
     j++;
     }
 
 for (i = 0; i < parseInt(0.70*time_js.length); i++){
     data5[i] = new Array();
-    data5[i].push(time_js[i],val5_js[i])
+    data5[i].push((time_js[i]*1000)+19800000,val5_js[i])
     }
 var j = parseInt(0.70*time_js.length)+1;
 for (i = 0; i < val2_js.length; i++){
     data6[i] = new Array();
-    data6[i].push(time_js[j],val6_js[i])
+    data6[i].push((time_js[j]*1000)+19800000,val6_js[i])
     j++;
     }
 
 for (i = 0; i < parseInt(0.70*time_js.length); i++){
     data7[i] = new Array();
-    data7[i].push(time_js[i],val7_js[i])
+    data7[i].push((time_js[i]*1000)+19800000,val7_js[i])
     }
 var j = parseInt(0.70*time_js.length)+1;
 for (i = 0; i < val4_js.length; i++){
     data8[i] = new Array();
-    data8[i].push(time_js[j],val8_js[i])
+    data8[i].push((time_js[j]*1000)+19800000,val8_js[i])
     j++;
     }
 
 for (i = 0; i < parseInt(0.70*time_js.length); i++){
     data9[i] = new Array();
-    data9[i].push(time_js[i],val9_js[i])
+    data9[i].push((time_js[i]*1000)+19800000,val9_js[i])
     }
 var j = parseInt(0.70*time_js.length)+1;
 for (i = 0; i < val2_js.length; i++){
     data10[i] = new Array();
-    data10[i].push(time_js[j],val10_js[i])
+    data10[i].push((time_js[j]*1000)+19800000,val10_js[i])
     j++;
     }
 
@@ -84,6 +84,7 @@ var chart = new Highcharts.Chart({
                             title: {
                             text: 'TIME'
                             }
+                            
                         },
                         yAxis: {
                             title: {
@@ -91,6 +92,14 @@ var chart = new Highcharts.Chart({
                             },
                             min: 0
                         },
+                        tooltip: {
+            headerFormat: '<b>{series.name}</b><br>',
+            pointFormat: '{point.x:%e-%b %H:%M}:  {point.y:.2f} hits',
+            formatter: function()
+        {
+            return Highcharts.dateFormat('%d.%m.%Y %H.%M', this.x) +': '+ this.y +' Bytes transferred<br/>' ;
+        }
+        },
                          plotOptions: {
                             spline: {
                                 lineWidth: 0.7,
@@ -142,6 +151,14 @@ var chart = new Highcharts.Chart({
                             },
                             min: 0
                         },
+                        tooltip: {
+            headerFormat: '<b>{series.name}</b><br>',
+            pointFormat: '{point.x:%e-%b %H:%M}:  {point.y:.2f} hits',
+            formatter: function()
+        {
+            return Highcharts.dateFormat('%d.%m.%Y %H.%M', this.x) +': '+ this.y +' request<br/>' ;
+        }
+        },
                         plotOptions: {
                             spline: {
                                 lineWidth: 0.7,
@@ -193,6 +210,14 @@ var chart = new Highcharts.Chart({
                             },
                             min: 0
                         },
+                        tooltip: {
+            headerFormat: '<b>{series.name}</b><br>',
+            pointFormat: '{point.x:%e-%b %H:%M}:  {point.y:.2f} hits',
+            formatter: function()
+        {
+            return Highcharts.dateFormat('%d.%m.%Y %H.%M', this.x) +': '+ this.y +' request<br/>' ;
+        }
+        },
                         plotOptions: {
                             spline: {
                                 lineWidth: 0.7,
@@ -244,6 +269,14 @@ var chart = new Highcharts.Chart({
                             },
                             min: 0
                         },
+                        tooltip: {
+            headerFormat: '<b>{series.name}</b><br>',
+            pointFormat: '{point.x:%e-%b %H:%M}:  {point.y:.2f} hits',
+            formatter: function()
+        {
+            return Highcharts.dateFormat('%d.%m.%Y %H.%M', this.x) +': '+ this.y +' request<br/>' ;
+        }
+        },
                         plotOptions: {
                             spline: {
                                 lineWidth: 0.7,
@@ -295,6 +328,14 @@ var chart = new Highcharts.Chart({
                             },
                             min: 0
                         },
+                        tooltip: {
+            headerFormat: '<b>{series.name}</b><br>',
+            pointFormat: '{point.x:%e-%b %H:%M}:  {point.y:.2f} hits',
+            formatter: function()
+        {
+            return Highcharts.dateFormat('%d.%m.%Y %H.%M', this.x) +': '+ this.y +' visits<br/>' ;
+        }
+        },
                         plotOptions: {
                             spline: {
                                 lineWidth: 0.7,

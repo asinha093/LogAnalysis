@@ -1,4 +1,3 @@
-__author__ = 'abhinav'
 '''
 This file calculates the counts of specific fields present in the table such as total requests, total bytes transfered, etc and
 inserts these counts to a new cassandra table: traffic. This table will be used to do predictive analysis and forecast these counts

@@ -1,4 +1,3 @@
-__author__ = 'rahul'
 '''
 This file calculates the unique counts of various fields stored in the main columnfamily.
 The file stores these counts (a list) into the existing table: main_counts which will be used for building the UI !

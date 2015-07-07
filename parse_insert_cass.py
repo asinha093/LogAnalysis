@@ -1,4 +1,3 @@
-__author__ = 'abhinav'
 '''
 This file reads the logfile, parses various fields present in the logfile, creates a new keyspace in cassandra, creates a columnfamily in the keyspace with
 the various fields as column names and adds data into the database!

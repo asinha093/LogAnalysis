@@ -23,6 +23,6 @@ It also has the ability to support multiple log formats.
 
 ## Contact
 
-For any queries reach at: asinha093@gmail.com
+For any queries reach at: asinha093@gmail.com, r.penti@gmail.com
 
 Have fun!
